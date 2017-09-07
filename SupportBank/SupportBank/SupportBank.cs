@@ -70,7 +70,7 @@ namespace SupportBank
 
             if (userInput == "List All")
             {
-                foreach(var kvp in accountLog)
+                foreach (var kvp in accountLog)
                 {
                     Console.WriteLine(" Account name: " + kvp.Key + " -- Account Value: " + kvp.Value);
                 }
@@ -100,6 +100,7 @@ namespace SupportBank
             }
 
         }
+
 
     }
 }
