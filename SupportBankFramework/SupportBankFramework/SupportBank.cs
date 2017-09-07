@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using NLog;
+using NLog.Config;
+using NLog.Targets;
 
 namespace SupportBankFramework
 {
@@ -24,13 +26,25 @@ namespace SupportBankFramework
 
     class SupportBank
     {
+
+        private static Logger log = LogManager.GetCurrentClassLogger();
+
         public static void Main(string[] args)
         {
+            var config = new LoggingConfiguration();
+            var target = new FileTarget { FileName = @"C:\Work\Training\Supportbank\Logs\SupportBank.log", Layout = @"${longdate} ${level} - ${logger}: ${message}" };
+            config.AddTarget("File Logger", target);
+            config.LoggingRules.Add(new LoggingRule("*", LogLevel.Debug, target));
+            LogManager.Configuration = config;
 
-            string[] rawData = System.IO.File.ReadAllLines(@"C:\Work\Training\supportbank\Transactions2014.csv");
+
+
+            string path = @"C:\Work\Training\supportbank\DodgyTransactions2015.csv";
+            string[] rawData = System.IO.File.ReadAllLines(path);
+            log.Info("loaded rawData from " + path);
 
             var transactionList = CreateTransactionList(rawData);
-
+            log.Info("Created transaction list of length {0}", transactionList.Count);
 
             var accountLog = CreateAccountLog(transactionList);
 
@@ -52,6 +66,7 @@ namespace SupportBankFramework
 
         public static void ListAll(Dictionary<string, float> dictionary)
         {
+            //given a dictionary of accounts with values it will return them all, line by line.
             foreach (var kvp in dictionary)
             {
                 Console.WriteLine(" Account name: " + kvp.Key + " -- Account Value: " + kvp.Value);
@@ -61,6 +76,7 @@ namespace SupportBankFramework
 
         public static void ListSpecific(string userInput, List<Transaction> listOfTransactions)
         {
+            //given a userinput, which will be in the form "List <<account_name>>" it will find and list all transactions involving that account.
             int spaceLocation = userInput.IndexOf(" ");
             string accountName = userInput.Substring(spaceLocation + 1);
 
@@ -86,6 +102,7 @@ namespace SupportBankFramework
 
         public static Dictionary<string, float> CreateAccountLog(List<Transaction> transactionList)
         {
+            //Given a list of all transactions that have occured it will create a dictionary of accounts and values in each.
             var accountLog = new Dictionary<string, float>();
 
             foreach (var currentTransaction in transactionList)
@@ -116,6 +133,7 @@ namespace SupportBankFramework
 
         public static List<Transaction> CreateTransactionList(string[] rawData)
         {
+            //given a CSV file of a suitable format, this will create a list of transactions.
             int dataLength = rawData.Length;
 
             List<Transaction> transactionList = new List<Transaction>();
@@ -134,13 +152,38 @@ namespace SupportBankFramework
 
                 var currentTransaction = new Transaction();
 
+
                 currentTransaction.dates = line.Substring(0, comma1);
                 currentTransaction.accountFrom = line.Substring(comma1 + 1, (comma2 - comma1) - 1);
                 currentTransaction.accountTo = line.Substring(comma2 + 1, (comma3 - comma2) - 1);
-                currentTransaction.description = rawData[i].Substring(comma3 + 1, (comma4 - comma3) - 1);
-                currentTransaction.amount = Single.Parse(rawData[i].Substring(comma4 + 1, (lineLength - comma4 - 1)));
+                currentTransaction.description = line.Substring(comma3 + 1, (comma4 - comma3) - 1);
+                bool amountIsValid = false;
+                bool dateIsValid = false;
+                try
+                {
+                    currentTransaction.amount = Single.Parse(rawData[i].Substring(comma4 + 1, (lineLength - comma4 - 1)));
+                    amountIsValid = true;
+                }
+                catch
+                {
+                    log.Error("Failed to convert stored transaction value into a number. Transaction index: {0}, Transaction date: {1}", i, currentTransaction.dates);
+                    log.Warn("This transaction has not been stored.");
+                }
+                try
+                {
+                    Convert.ToDateTime(currentTransaction.dates);
+                    dateIsValid = true;
+                }
+                catch
+                {
+                    log.Error("Stored Transaction date was not in a valid format. Transaction index: {0}", i);
+                    log.Warn("This transaction has not been stored.");
 
-                transactionList.Add(currentTransaction);
+                }
+                if (dateIsValid && amountIsValid)
+                {
+                    transactionList.Add(currentTransaction);
+                }
             }
 
             return transactionList;
