@@ -6,16 +6,18 @@ using System.Threading.Tasks;
 using NLog;
 using NLog.Config;
 using NLog.Targets;
+using Newtonsoft.Json;
+
 
 namespace SupportBankFramework
 {
 
     class Transaction
     {
-        public string dates;
-        public string accountFrom;
-        public string accountTo;
-        public string description;
+        public string date;
+        public string fromAccount;
+        public string toAccount;
+        public string narrative;
         public float amount;
 
     }
@@ -37,7 +39,12 @@ namespace SupportBankFramework
             config.LoggingRules.Add(new LoggingRule("*", LogLevel.Debug, target));
             LogManager.Configuration = config;
 
+            string jsonPath = @"C:\Work\Training\supportbank\Transactions2013.json";
+            string rawJson = System.IO.File.ReadAllText(jsonPath);
+            var importedJson = JsonConvert.DeserializeObject<List<Transaction>>(rawJson);
 
+            //importedJson is a List<Transaction> like the other. make it possible to select which one to use then make sure everything still works.
+            //Next add the Import function.
 
             string path = @"C:\Work\Training\supportbank\DodgyTransactions2015.csv";
             string[] rawData = System.IO.File.ReadAllLines(path);
@@ -83,17 +90,17 @@ namespace SupportBankFramework
 
             foreach (var currentTransaction in listOfTransactions)
             {
-                if (currentTransaction.accountFrom == accountName)
+                if (currentTransaction.fromAccount == accountName)
                 {
-                    string transactionString = string.Format("{0} Paid {1} to {2} for {3}.", currentTransaction.dates, currentTransaction.amount,
-                        currentTransaction.accountTo, currentTransaction.description);
+                    string transactionString = string.Format("{0} Paid {1} to {2} for {3}.", currentTransaction.date, currentTransaction.amount,
+                        currentTransaction.toAccount, currentTransaction.narrative);
                     Console.WriteLine(transactionString);
                 }
 
-                if (currentTransaction.accountTo == accountName)
+                if (currentTransaction.toAccount == accountName)
                 {
-                    string transactionString = string.Format("{0} Received {1} from {2} for {3}.", currentTransaction.dates, currentTransaction.amount,
-                        currentTransaction.accountFrom, currentTransaction.description);
+                    string transactionString = string.Format("{0} Received {1} from {2} for {3}.", currentTransaction.date, currentTransaction.amount,
+                        currentTransaction.fromAccount, currentTransaction.narrative);
                     Console.WriteLine(transactionString);
                 }
 
@@ -107,25 +114,25 @@ namespace SupportBankFramework
 
             foreach (var currentTransaction in transactionList)
             {
-                if (accountLog.ContainsKey(currentTransaction.accountFrom))
+                if (accountLog.ContainsKey(currentTransaction.fromAccount))
                 {
-                    accountLog[currentTransaction.accountFrom] = accountLog[currentTransaction.accountFrom] - currentTransaction.amount;
+                    accountLog[currentTransaction.fromAccount] = accountLog[currentTransaction.fromAccount] - currentTransaction.amount;
                 }
                 else
                 {
-                    accountLog.Add(currentTransaction.accountFrom, -currentTransaction.amount);
+                    accountLog.Add(currentTransaction.fromAccount, -currentTransaction.amount);
                 }
             }
 
             foreach (var currentTransaction in transactionList)
             {
-                if (accountLog.ContainsKey(currentTransaction.accountTo))
+                if (accountLog.ContainsKey(currentTransaction.toAccount))
                 {
-                    accountLog[currentTransaction.accountTo] = accountLog[currentTransaction.accountTo] + currentTransaction.amount;
+                    accountLog[currentTransaction.toAccount] = accountLog[currentTransaction.toAccount] + currentTransaction.amount;
                 }
                 else
                 {
-                    accountLog.Add(currentTransaction.accountTo, currentTransaction.amount);
+                    accountLog.Add(currentTransaction.toAccount, currentTransaction.amount);
                 }
             }
             return accountLog;
@@ -153,10 +160,10 @@ namespace SupportBankFramework
                 var currentTransaction = new Transaction();
 
 
-                currentTransaction.dates = line.Substring(0, comma1);
-                currentTransaction.accountFrom = line.Substring(comma1 + 1, (comma2 - comma1) - 1);
-                currentTransaction.accountTo = line.Substring(comma2 + 1, (comma3 - comma2) - 1);
-                currentTransaction.description = line.Substring(comma3 + 1, (comma4 - comma3) - 1);
+                currentTransaction.date = line.Substring(0, comma1);
+                currentTransaction.fromAccount = line.Substring(comma1 + 1, (comma2 - comma1) - 1);
+                currentTransaction.toAccount = line.Substring(comma2 + 1, (comma3 - comma2) - 1);
+                currentTransaction.narrative = line.Substring(comma3 + 1, (comma4 - comma3) - 1);
                 bool amountIsValid = false;
                 bool dateIsValid = false;
                 try
@@ -166,12 +173,12 @@ namespace SupportBankFramework
                 }
                 catch
                 {
-                    log.Error("Failed to convert stored transaction value into a number. Transaction index: {0}, Transaction date: {1}", i, currentTransaction.dates);
+                    log.Error("Failed to convert stored transaction value into a number. Transaction index: {0}, Transaction date: {1}", i, currentTransaction.date);
                     log.Warn("This transaction has not been stored.");
                 }
                 try
                 {
-                    Convert.ToDateTime(currentTransaction.dates);
+                    Convert.ToDateTime(currentTransaction.date);
                     dateIsValid = true;
                 }
                 catch
