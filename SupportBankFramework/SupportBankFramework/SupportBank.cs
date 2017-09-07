@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace SupportBank
+
+namespace SupportBankFramework
 {
 
     class Transaction
@@ -19,9 +22,9 @@ namespace SupportBank
 
 
 
-    class Program
+    class SupportBank
     {
-        static void Main(string[] args)
+        public void Main(string[] args)
         {
 
             string[] rawData = System.IO.File.ReadAllLines(@"C:\Work\Training\supportbank\Transactions2014.csv");
@@ -118,15 +121,12 @@ namespace SupportBank
 
                 }
 
-               // var transactionSearch = transactionList.Where(x => x.accountTo == accountName)
-               //     .Select(x => new SelectListItem { dates = x.dates, amount = x.amount, accountTo = x.accountTo, description = x.description }).ToString();
-              //  Console.WriteLine(transactionSearch);
                 Console.ReadKey();
-               
+                
+
             }
 
         }
-
 
     }
 }
