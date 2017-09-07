@@ -3,6 +3,21 @@ using System.Collections.Generic;
 
 namespace SupportBank
 {
+
+    class Transaction
+    {
+        public string dates;
+        public string accountFrom;
+        public string accountTo;
+        public string description;
+        public float amount;
+
+    }
+
+
+
+
+
     class Program
     {
         static void Main(string[] args)
@@ -11,11 +26,8 @@ namespace SupportBank
             string[] rawData = System.IO.File.ReadAllLines(@"C:\Work\Training\supportbank\Transactions2014.csv");
             int dataLength = rawData.Length;
 
-            List<string> dates = new List<string>();
-            List<string> accountFrom = new List<string>();
-            List<string> accountTo = new List<string>();
-            List<float> transactionAmount = new List<float>();
-            List<string> transactionDescription = new List<string>();
+            List<Transaction> transactionList = new List<Transaction>();
+
 
             for (int i = 1; i < dataLength; i++)
             {
@@ -28,42 +40,47 @@ namespace SupportBank
                 int lineLength = rawData[i].Length;
 
 
+                var currentTransaction = new Transaction();
 
-                dates.Add(line.Substring(0, comma1));
-                accountFrom.Add(line.Substring(comma1 + 1, (comma2 - comma1) - 1));
-                accountTo.Add(line.Substring(comma2 + 1, (comma3 - comma2) - 1));
-                transactionDescription.Add(rawData[i].Substring(comma3 + 1, (comma4 - comma3) - 1));
-                transactionAmount.Add(Single.Parse(rawData[i].Substring(comma4 + 1, (lineLength - comma4 - 1))));
+                currentTransaction.dates = line.Substring(0, comma1);
+                currentTransaction.accountFrom = line.Substring(comma1 + 1, (comma2 - comma1) - 1);
+                currentTransaction.accountTo = line.Substring(comma2 + 1, (comma3 - comma2) - 1);
+                currentTransaction.description = rawData[i].Substring(comma3 + 1, (comma4 - comma3) - 1);
+                currentTransaction.amount = Single.Parse(rawData[i].Substring(comma4 + 1, (lineLength - comma4 - 1)));
 
-
+                transactionList.Add(currentTransaction);
             }
+
+
 
             var accountLog = new Dictionary<string, float>();
 
-            for (int i = 0; i < dataLength- 1; i++)
+            foreach (var currentTransaction in transactionList)
             {
-                if (accountLog.ContainsKey(accountFrom[i]))
+                if (accountLog.ContainsKey(currentTransaction.accountFrom))
                 {
-                    accountLog[accountFrom[i]] = accountLog[accountFrom[i]] - transactionAmount[i];
+                    accountLog[currentTransaction.accountFrom] = accountLog[currentTransaction.accountFrom] - currentTransaction.amount;
+
                 }
                 else
                 {
-                    accountLog.Add(accountFrom[i], -transactionAmount[i]);
+                    accountLog.Add(currentTransaction.accountFrom, -currentTransaction.amount);
                 }
-
-
-                if (accountLog.ContainsKey(accountTo[i]))
-                {
-                    accountLog[accountTo[i]] = accountLog[accountTo[i]] + transactionAmount[i];
-                }
-                else
-                {
-                    accountLog.Add(accountTo[i], transactionAmount[i]);
-                }
-
-
-
             }
+
+            foreach (var currentTransaction in transactionList)
+            {
+                if (accountLog.ContainsKey(currentTransaction.accountTo))
+                {
+                    accountLog[currentTransaction.accountTo] = accountLog[currentTransaction.accountTo] + currentTransaction.amount;
+
+                }
+                else
+                {
+                    accountLog.Add(currentTransaction.accountTo, currentTransaction.amount);
+                }
+            }
+
 
             Console.WriteLine("Please enter command: (List All) or (List [Account])");
             string userInput = Console.ReadLine();
@@ -82,19 +99,24 @@ namespace SupportBank
                 string accountName = userInput.Substring(spaceLocation + 1);
 
 
-                for (int i = 0; i < dataLength - 1; i++)
+                foreach (var currentTransaction in transactionList)
                 {
-                    if (accountFrom[i] == accountName)
+                    if (currentTransaction.accountFrom == accountName)
                     {
-                        string transactionString = string.Format("{0} Paid {1} to {2} for {3}.", dates[i], transactionAmount[i], accountTo[i], transactionDescription[i]);
+                        string transactionString = string.Format("{0} Paid {1} to {2} for {3}.", currentTransaction.dates, currentTransaction.amount,
+                            currentTransaction.accountTo, currentTransaction.description);
                         Console.WriteLine(transactionString);
                     }
-                    if (accountTo[i] == accountName)
+
+                    if (currentTransaction.accountTo == accountName)
                     {
-                        string transactionString = string.Format("{0} Received {1} from {2} for {3}.", dates[i], transactionAmount[i], accountFrom[i], transactionDescription[i]);
+                        string transactionString = string.Format("{0} Received {1} from {2} for {3}.", currentTransaction.dates, currentTransaction.amount,
+                            currentTransaction.accountFrom, currentTransaction.description);
                         Console.WriteLine(transactionString);
                     }
+
                 }
+
                 Console.ReadKey();
 
             }
