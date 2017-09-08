@@ -47,7 +47,7 @@ namespace SupportBankFramework
             var filePath = fileNameInput.Substring(7, inputLength - 7);
 
 
-            var transactionList = generateTransactionList(filePath);
+            var transactionList = GenerateTransactionList(filePath);
 
             var accountLog = CreateAccountLog(transactionList);
 
@@ -153,13 +153,13 @@ namespace SupportBankFramework
                 int lineLength = rawData[i].Length;
 
 
-                var currentTransaction = new Transaction();
-
-
-                currentTransaction.date = line.Substring(0, comma1);
-                currentTransaction.fromAccount = line.Substring(comma1 + 1, (comma2 - comma1) - 1);
-                currentTransaction.toAccount = line.Substring(comma2 + 1, (comma3 - comma2) - 1);
-                currentTransaction.narrative = line.Substring(comma3 + 1, (comma4 - comma3) - 1);
+                var currentTransaction = new Transaction
+                {
+                    date = line.Substring(0, comma1),
+                    fromAccount = line.Substring(comma1 + 1, (comma2 - comma1) - 1),
+                    toAccount = line.Substring(comma2 + 1, (comma3 - comma2) - 1),
+                    narrative = line.Substring(comma3 + 1, (comma4 - comma3) - 1)
+                };
                 bool amountIsValid = false;
                 bool dateIsValid = false;
                 try
@@ -192,7 +192,7 @@ namespace SupportBankFramework
             return transactionList;
         }
 
-        public static string getFileExtension(string fileName)
+        public static string GetFileExtension(string fileName)
         {
             int nameLength = fileName.Length;
             var extensionStart = fileName.LastIndexOf(".");
@@ -200,10 +200,10 @@ namespace SupportBankFramework
             return extension;
         }
 
-        public static List<Transaction> generateTransactionList(string filePath)
+        public static List<Transaction> GenerateTransactionList(string filePath)
         {
             List<Transaction> transactionList = new List<Transaction>();
-            if (getFileExtension(filePath) == "csv")
+            if (GetFileExtension(filePath) == "csv")
             {
                 string[] rawData = System.IO.File.ReadAllLines(filePath);
                 log.Info("loaded rawData from " + filePath);
@@ -211,7 +211,7 @@ namespace SupportBankFramework
                 transactionList = CreateTransactionListCSV(rawData);
                 log.Info("Created transaction list of length {0}, from csv file.", transactionList.Count);
             }
-            if (getFileExtension(filePath) == "json")
+            if (GetFileExtension(filePath) == "json")
             {
                 string rawJson = System.IO.File.ReadAllText(filePath);
                 transactionList = JsonConvert.DeserializeObject<List<Transaction>>(rawJson);
