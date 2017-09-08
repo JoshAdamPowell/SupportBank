@@ -14,7 +14,7 @@ namespace SupportBankFramework
             return filePath;
         }
 
-        public static void AskUserForActions(List<Transaction> transactionList, Dictionary<string, float> accountLog)
+        public static void ExecuteUserCommands(List<Transaction> transactionList, Dictionary<string, float> accountLog)
         {
             Console.WriteLine("Please enter command: (List All) or (List [Account])");
             string userInput = Console.ReadLine();

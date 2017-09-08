@@ -41,7 +41,7 @@ namespace SupportBankFramework
 
             var accountLog = DataGenerator.CreateAccountLog(transactionList);
 
-            UserHandler.AskUserForActions(transactionList, accountLog);
+            UserHandler.ExecuteUserCommands(transactionList, accountLog);
 
             Console.ReadKey();
 

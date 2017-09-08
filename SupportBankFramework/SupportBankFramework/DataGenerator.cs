@@ -13,17 +13,11 @@ namespace SupportBankFramework
             List<Transaction> transactionList = new List<Transaction>();
             if (GetFileExtension(filePath) == "csv")
             {
-                string[] rawData = System.IO.File.ReadAllLines(filePath);
-                log.Info("loaded rawData from " + filePath);
-
-                transactionList = CSVParser.CreateTransactionListCSV(rawData);
-                log.Info("Created transaction list of length {0}, from csv file.", transactionList.Count);
+                transactionList = CSVParser.CreateTransactionListCSV(filePath);
             }
             if (GetFileExtension(filePath) == "json")
             {
-                string rawJson = System.IO.File.ReadAllText(filePath);
-                transactionList = JsonConvert.DeserializeObject<List<Transaction>>(rawJson);
-                log.Info("Imported json file, creating transaction list of length " + transactionList.Count);
+                transactionList = JSONParser.CreateTransactionListJSON(filePath);
             }
             if (GetFileExtension(filePath) == "xml")
             {
@@ -49,10 +43,7 @@ namespace SupportBankFramework
                 {
                     accountLog.Add(currentTransaction.fromAccount, -currentTransaction.amount);
                 }
-            }
 
-            foreach (var currentTransaction in transactionList)
-            {
                 if (accountLog.ContainsKey(currentTransaction.toAccount))
                 {
                     accountLog[currentTransaction.toAccount] = accountLog[currentTransaction.toAccount] + currentTransaction.amount;

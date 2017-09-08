@@ -8,8 +8,12 @@ namespace SupportBankFramework
     {
         private static Logger log = LogManager.GetCurrentClassLogger();
 
-        public static List<Transaction> CreateTransactionListCSV(string[] rawData)
+        public static List<Transaction> CreateTransactionListCSV(string filePath)
         {
+
+            string[] rawData = System.IO.File.ReadAllLines(filePath);
+            log.Info("loaded rawData from " + filePath);
+
             //given a CSV file of a suitable format, this will create a list of transactions.
             int dataLength = rawData.Length;
 
@@ -45,7 +49,7 @@ namespace SupportBankFramework
                 }
                 
             }
-
+            log.Info("Created transaction list of length {0}, from csv file.", transactionList.Count);
             return transactionList;
         }
 
