@@ -38,20 +38,29 @@ namespace SupportBankFramework
             config.AddTarget("File Logger", target);
             config.LoggingRules.Add(new LoggingRule("*", LogLevel.Debug, target));
             LogManager.Configuration = config;
+            //Remove Import word from input
+            Console.WriteLine("First, import a transaction file with 'Import <filename>'. Be sure to include the file extension!");
+            string fileNameInput = Console.ReadLine();
+            var inputLength = fileNameInput.Length;
+            var filePath = fileNameInput.Substring(7, inputLength - 7);
 
-            string jsonPath = @"C:\Work\Training\supportbank\Transactions2013.json";
-            string rawJson = System.IO.File.ReadAllText(jsonPath);
-            var importedJson = JsonConvert.DeserializeObject<List<Transaction>>(rawJson);
+            List<Transaction> transactionList = new List<Transaction>();
+            if (getFileExtension(filePath) == "csv")
+            {
+                string[] rawData = System.IO.File.ReadAllLines(filePath);
+                log.Info("loaded rawData from " + filePath);
 
-            //importedJson is a List<Transaction> like the other. make it possible to select which one to use then make sure everything still works.
-            //Next add the Import function.
+                transactionList = CreateTransactionListCSV(rawData);
+                log.Info("Created transaction list of length {0}, from csv file.", transactionList.Count);
+            }
+            if (getFileExtension(filePath) == "json")
+            {
+                string rawJson = System.IO.File.ReadAllText(filePath);
+                transactionList = JsonConvert.DeserializeObject<List<Transaction>>(rawJson);
+                log.Info("Imported json file, creating transaction list of length " + transactionList.Count);
+            }
 
-            string path = @"C:\Work\Training\supportbank\DodgyTransactions2015.csv";
-            string[] rawData = System.IO.File.ReadAllLines(path);
-            log.Info("loaded rawData from " + path);
-
-            var transactionList = CreateTransactionList(rawData);
-            log.Info("Created transaction list of length {0}", transactionList.Count);
+            
 
             var accountLog = CreateAccountLog(transactionList);
 
@@ -138,7 +147,7 @@ namespace SupportBankFramework
             return accountLog;
         }
 
-        public static List<Transaction> CreateTransactionList(string[] rawData)
+        public static List<Transaction> CreateTransactionListCSV(string[] rawData)
         {
             //given a CSV file of a suitable format, this will create a list of transactions.
             int dataLength = rawData.Length;
@@ -196,6 +205,13 @@ namespace SupportBankFramework
             return transactionList;
         }
 
+        public static string getFileExtension(string fileName)
+        {
+            int nameLength = fileName.Length;
+            var extensionStart = fileName.LastIndexOf(".");
+            string extension = fileName.Substring(extensionStart + 1, nameLength - extensionStart - 1);
+            return extension;
+        }
 
     }
 }
