@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using NLog;
+using System;
 using System.Collections.Generic;
 
 namespace SupportBankFramework
@@ -21,6 +22,7 @@ namespace SupportBankFramework
             }
             if (GetFileExtension(filePath) == "xml")
             {
+                transactionList = XMLParser.CreateTransactionListXML(@"C:\Work\Training\supportbank\Transactions2012.xml");
                 //XML parsing code will go here when ready (or, more likely, refer to that code elsewhere)
             }
 
@@ -61,6 +63,7 @@ namespace SupportBankFramework
             int nameLength = fileName.Length;
             var extensionStart = fileName.LastIndexOf(".");
             string extension = fileName.Substring(extensionStart + 1, nameLength - extensionStart - 1);
+            Console.WriteLine(extension);
             return extension;
         }
 
