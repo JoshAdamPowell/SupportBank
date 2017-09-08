@@ -35,27 +35,14 @@ namespace SupportBankFramework
         {
             StartLogging();
 
-            Console.WriteLine("First, import a transaction file with 'Import <filename>'. Be sure to include the file extension!");
-            string fileNameInput = Console.ReadLine();
-            var inputLength = fileNameInput.Length;
-            var filePath = fileNameInput.Substring(7, inputLength - 7);
-
+            string filePath = UserHandler.AskUserForFile();
 
             var transactionList = DataGenerator.GenerateTransactionList(filePath);
 
             var accountLog = DataGenerator.CreateAccountLog(transactionList);
 
-            Console.WriteLine("Please enter command: (List All) or (List [Account])");
-            string userInput = Console.ReadLine();
+            UserHandler.AskUserForActions(transactionList, accountLog);
 
-            if (userInput == "List All")
-            {
-                DataAnalyser.ListAll(accountLog);
-            }
-            if (userInput != "List All" && userInput.Contains("List"))
-            {
-                DataAnalyser.ListSpecific(userInput, transactionList);
-            }
             Console.ReadKey();
 
         }
@@ -71,11 +58,5 @@ namespace SupportBankFramework
         }
 
     }
-
-
-
-    
-
-
 
 }
