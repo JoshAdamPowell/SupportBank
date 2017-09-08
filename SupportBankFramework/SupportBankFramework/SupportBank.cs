@@ -33,13 +33,7 @@ namespace SupportBankFramework
 
         public static void Main(string[] args)
         {
-            var config = new LoggingConfiguration();
-            var target = new FileTarget { FileName = @"C:\Work\Training\Supportbank\Logs\SupportBank.log", Layout = @"${longdate} ${level} - ${logger}: ${message}" };
-            config.AddTarget("File Logger", target);
-            config.LoggingRules.Add(new LoggingRule("*", LogLevel.Debug, target));
-            LogManager.Configuration = config;
-
-
+            StartLogging();
 
             Console.WriteLine("First, import a transaction file with 'Import <filename>'. Be sure to include the file extension!");
             string fileNameInput = Console.ReadLine();
@@ -47,91 +41,88 @@ namespace SupportBankFramework
             var filePath = fileNameInput.Substring(7, inputLength - 7);
 
 
-            var transactionList = GenerateTransactionList(filePath);
+            var transactionList = GenerateData.GenerateTransactionList(filePath);
 
-            var accountLog = CreateAccountLog(transactionList);
+            var accountLog = GenerateData.CreateAccountLog(transactionList);
 
             Console.WriteLine("Please enter command: (List All) or (List [Account])");
             string userInput = Console.ReadLine();
 
             if (userInput == "List All")
             {
-                ListAll(accountLog);
+                AnalyseData.ListAll(accountLog);
             }
             if (userInput != "List All" && userInput.Contains("List"))
             {
-                ListSpecific(userInput, transactionList);
+                AnalyseData.ListSpecific(userInput, transactionList);
             }
             Console.ReadKey();
 
         }
 
 
-        public static void ListAll(Dictionary<string, float> dictionary)
+        
+
+        
+
+        
+
+
+
+
+        public static void StartLogging()
         {
-            //given a dictionary of accounts with values it will return them all, line by line.
-            foreach (var kvp in dictionary)
-            {
-                Console.WriteLine(" Account name: " + kvp.Key + " -- Account Value: " + kvp.Value);
-            }
+            var config = new LoggingConfiguration();
+            var target = new FileTarget { FileName = @"C:\Work\Training\Supportbank\Logs\SupportBank.log", Layout = @"${longdate} ${level} - ${logger}: ${message}" };
+            config.AddTarget("File Logger", target);
+            config.LoggingRules.Add(new LoggingRule("*", LogLevel.Debug, target));
+            LogManager.Configuration = config;
         }
 
+    }
 
-        public static void ListSpecific(string userInput, List<Transaction> listOfTransactions)
+    class GenerateData
+    {
+        private static Logger log = LogManager.GetCurrentClassLogger();
+
+        public static List<Transaction> GenerateTransactionList(string filePath)
         {
-            //given a userinput, which will be in the form "List <<account_name>>" it will find and list all transactions involving that account.
-            int spaceLocation = userInput.IndexOf(" ");
-            string accountName = userInput.Substring(spaceLocation + 1);
-
-
-            foreach (var currentTransaction in listOfTransactions)
+            StartLogging();
+            List<Transaction> transactionList = new List<Transaction>();
+            if (GetFileExtension(filePath) == "csv")
             {
-                if (currentTransaction.fromAccount == accountName)
-                {
-                    string transactionString = string.Format("{0} Paid {1} to {2} for {3}.", currentTransaction.date, currentTransaction.amount,
-                        currentTransaction.toAccount, currentTransaction.narrative);
-                    Console.WriteLine(transactionString);
-                }
+                string[] rawData = System.IO.File.ReadAllLines(filePath);
+                log.Info("loaded rawData from " + filePath);
 
-                if (currentTransaction.toAccount == accountName)
-                {
-                    string transactionString = string.Format("{0} Received {1} from {2} for {3}.", currentTransaction.date, currentTransaction.amount,
-                        currentTransaction.fromAccount, currentTransaction.narrative);
-                    Console.WriteLine(transactionString);
-                }
-
+                transactionList = CreateTransactionListCSV(rawData);
+                log.Info("Created transaction list of length {0}, from csv file.", transactionList.Count);
             }
+            if (GetFileExtension(filePath) == "json")
+            {
+                string rawJson = System.IO.File.ReadAllText(filePath);
+                transactionList = JsonConvert.DeserializeObject<List<Transaction>>(rawJson);
+                log.Info("Imported json file, creating transaction list of length " + transactionList.Count);
+            }
+
+            return transactionList;
+
         }
 
-        public static Dictionary<string, float> CreateAccountLog(List<Transaction> transactionList)
+        public static string GetFileExtension(string fileName)
         {
-            //Given a list of all transactions that have occured it will create a dictionary of accounts and values in each.
-            var accountLog = new Dictionary<string, float>();
+            int nameLength = fileName.Length;
+            var extensionStart = fileName.LastIndexOf(".");
+            string extension = fileName.Substring(extensionStart + 1, nameLength - extensionStart - 1);
+            return extension;
+        }
 
-            foreach (var currentTransaction in transactionList)
-            {
-                if (accountLog.ContainsKey(currentTransaction.fromAccount))
-                {
-                    accountLog[currentTransaction.fromAccount] = accountLog[currentTransaction.fromAccount] - currentTransaction.amount;
-                }
-                else
-                {
-                    accountLog.Add(currentTransaction.fromAccount, -currentTransaction.amount);
-                }
-            }
-
-            foreach (var currentTransaction in transactionList)
-            {
-                if (accountLog.ContainsKey(currentTransaction.toAccount))
-                {
-                    accountLog[currentTransaction.toAccount] = accountLog[currentTransaction.toAccount] + currentTransaction.amount;
-                }
-                else
-                {
-                    accountLog.Add(currentTransaction.toAccount, currentTransaction.amount);
-                }
-            }
-            return accountLog;
+        public static void StartLogging()
+        {
+            var config = new LoggingConfiguration();
+            var target = new FileTarget { FileName = @"C:\Work\Training\Supportbank\Logs\SupportBank.log", Layout = @"${longdate} ${level} - ${logger}: ${message}" };
+            config.AddTarget("File Logger", target);
+            config.LoggingRules.Add(new LoggingRule("*", LogLevel.Debug, target));
+            LogManager.Configuration = config;
         }
 
         public static List<Transaction> CreateTransactionListCSV(string[] rawData)
@@ -191,37 +182,78 @@ namespace SupportBankFramework
 
             return transactionList;
         }
-
-        public static string GetFileExtension(string fileName)
+        public static Dictionary<string, float> CreateAccountLog(List<Transaction> transactionList)
         {
-            int nameLength = fileName.Length;
-            var extensionStart = fileName.LastIndexOf(".");
-            string extension = fileName.Substring(extensionStart + 1, nameLength - extensionStart - 1);
-            return extension;
-        }
+            //Given a list of all transactions that have occured it will create a dictionary of accounts and values in each.
+            var accountLog = new Dictionary<string, float>();
 
-        public static List<Transaction> GenerateTransactionList(string filePath)
-        {
-            List<Transaction> transactionList = new List<Transaction>();
-            if (GetFileExtension(filePath) == "csv")
+            foreach (var currentTransaction in transactionList)
             {
-                string[] rawData = System.IO.File.ReadAllLines(filePath);
-                log.Info("loaded rawData from " + filePath);
-
-                transactionList = CreateTransactionListCSV(rawData);
-                log.Info("Created transaction list of length {0}, from csv file.", transactionList.Count);
-            }
-            if (GetFileExtension(filePath) == "json")
-            {
-                string rawJson = System.IO.File.ReadAllText(filePath);
-                transactionList = JsonConvert.DeserializeObject<List<Transaction>>(rawJson);
-                log.Info("Imported json file, creating transaction list of length " + transactionList.Count);
+                if (accountLog.ContainsKey(currentTransaction.fromAccount))
+                {
+                    accountLog[currentTransaction.fromAccount] = accountLog[currentTransaction.fromAccount] - currentTransaction.amount;
+                }
+                else
+                {
+                    accountLog.Add(currentTransaction.fromAccount, -currentTransaction.amount);
+                }
             }
 
-            return transactionList;
-
+            foreach (var currentTransaction in transactionList)
+            {
+                if (accountLog.ContainsKey(currentTransaction.toAccount))
+                {
+                    accountLog[currentTransaction.toAccount] = accountLog[currentTransaction.toAccount] + currentTransaction.amount;
+                }
+                else
+                {
+                    accountLog.Add(currentTransaction.toAccount, currentTransaction.amount);
+                }
+            }
+            return accountLog;
         }
-
 
     }
+
+    class AnalyseData
+    {
+        public static void ListAll(Dictionary<string, float> dictionary)
+        {
+            //given a dictionary of accounts with values it will return them all, line by line.
+            foreach (var kvp in dictionary)
+            {
+                Console.WriteLine(" Account name: " + kvp.Key + " -- Account Value: " + kvp.Value);
+            }
+        }
+
+
+        public static void ListSpecific(string userInput, List<Transaction> listOfTransactions)
+        {
+            //given a userinput, which will be in the form "List <<account_name>>" it will find and list all transactions involving that account.
+            int spaceLocation = userInput.IndexOf(" ");
+            string accountName = userInput.Substring(spaceLocation + 1);
+
+
+            foreach (var currentTransaction in listOfTransactions)
+            {
+                if (currentTransaction.fromAccount == accountName)
+                {
+                    string transactionString = string.Format("{0} Paid {1} to {2} for {3}.", currentTransaction.date, currentTransaction.amount,
+                        currentTransaction.toAccount, currentTransaction.narrative);
+                    Console.WriteLine(transactionString);
+                }
+
+                if (currentTransaction.toAccount == accountName)
+                {
+                    string transactionString = string.Format("{0} Received {1} from {2} for {3}.", currentTransaction.date, currentTransaction.amount,
+                        currentTransaction.fromAccount, currentTransaction.narrative);
+                    Console.WriteLine(transactionString);
+                }
+
+            }
+        }
+    }
+
+
+
 }
