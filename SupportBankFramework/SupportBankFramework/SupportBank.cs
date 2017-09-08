@@ -38,29 +38,16 @@ namespace SupportBankFramework
             config.AddTarget("File Logger", target);
             config.LoggingRules.Add(new LoggingRule("*", LogLevel.Debug, target));
             LogManager.Configuration = config;
-            //Remove Import word from input
+
+
+
             Console.WriteLine("First, import a transaction file with 'Import <filename>'. Be sure to include the file extension!");
             string fileNameInput = Console.ReadLine();
             var inputLength = fileNameInput.Length;
             var filePath = fileNameInput.Substring(7, inputLength - 7);
 
-            List<Transaction> transactionList = new List<Transaction>();
-            if (getFileExtension(filePath) == "csv")
-            {
-                string[] rawData = System.IO.File.ReadAllLines(filePath);
-                log.Info("loaded rawData from " + filePath);
 
-                transactionList = CreateTransactionListCSV(rawData);
-                log.Info("Created transaction list of length {0}, from csv file.", transactionList.Count);
-            }
-            if (getFileExtension(filePath) == "json")
-            {
-                string rawJson = System.IO.File.ReadAllText(filePath);
-                transactionList = JsonConvert.DeserializeObject<List<Transaction>>(rawJson);
-                log.Info("Imported json file, creating transaction list of length " + transactionList.Count);
-            }
-
-            
+            var transactionList = generateTransactionList(filePath);
 
             var accountLog = CreateAccountLog(transactionList);
 
@@ -212,6 +199,29 @@ namespace SupportBankFramework
             string extension = fileName.Substring(extensionStart + 1, nameLength - extensionStart - 1);
             return extension;
         }
+
+        public static List<Transaction> generateTransactionList(string filePath)
+        {
+            List<Transaction> transactionList = new List<Transaction>();
+            if (getFileExtension(filePath) == "csv")
+            {
+                string[] rawData = System.IO.File.ReadAllLines(filePath);
+                log.Info("loaded rawData from " + filePath);
+
+                transactionList = CreateTransactionListCSV(rawData);
+                log.Info("Created transaction list of length {0}, from csv file.", transactionList.Count);
+            }
+            if (getFileExtension(filePath) == "json")
+            {
+                string rawJson = System.IO.File.ReadAllText(filePath);
+                transactionList = JsonConvert.DeserializeObject<List<Transaction>>(rawJson);
+                log.Info("Imported json file, creating transaction list of length " + transactionList.Count);
+            }
+
+            return transactionList;
+
+        }
+
 
     }
 }
